@@ -1,10 +1,14 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from fastapi import FastAPI, HTTPException
 import twstock
+
 
 app = FastAPI(
     title="台灣股票查詢 API",
     description="使用 twstock 查詢台灣股票即時資訊",
-    version="1.0.0",
+    version="1.0.1",
 )
 
 
@@ -30,12 +34,22 @@ def get_stock(code: str):
 
     info = result.get("info", {})
     realtime = result.get("realtime", {})
+    timestamp = result.get("timestamp")
+
+    taiwan_time = None
+
+    if timestamp:
+        taiwan_time = datetime.fromtimestamp(
+            timestamp,
+            tz=ZoneInfo("Asia/Taipei"),
+        ).strftime("%Y-%m-%d %H:%M:%S")
 
     return {
         "code": info.get("code"),
         "name": info.get("name"),
         "fullname": info.get("fullname"),
-        "time": info.get("time"),
+        "time": taiwan_time,
+        "timezone": "Asia/Taipei",
         "latest_trade_price": realtime.get("latest_trade_price"),
         "open": realtime.get("open"),
         "high": realtime.get("high"),
